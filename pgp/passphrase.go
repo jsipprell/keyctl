@@ -9,7 +9,7 @@
 // amount of time. If an encrypted private key is seen again
 // before it expires, the original PromptFunction will not
 // be called (unless decryption fails)
-package openpgp
+package pgp
 
 import (
 	"io"

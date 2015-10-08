@@ -1,4 +1,4 @@
-package openpgp
+package pgp
 
 import (
 	"io"
