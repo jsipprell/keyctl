@@ -19,10 +19,15 @@ import (
 	"golang.org/x/crypto/openpgp/packet"
 )
 
+// A standard passphrase prompting interface
 type Prompter interface {
 	Prompt([]openpgp.Key, bool) ([]byte, error)
 }
 
+// A wrapper keyring that can automatically decrypt openpgp secret keys if the
+// passphrase was previously used by the keyring (and the ttl has not expired)
+// Such caching lives beyond the lifetime of the current process unless the
+// process or thread keyring is used.
 type PassphraseKeyring struct {
 	keyctl.Keyring
 	Prompt Prompter
@@ -36,6 +41,7 @@ type passphrase struct {
 
 type prompter openpgp.PromptFunction
 
+// Create a new Prompter from an openpgp prompting function
 func NewPrompter(prompt openpgp.PromptFunction) Prompter {
 	return prompter(prompt)
 }
@@ -44,7 +50,11 @@ func (fn prompter) Prompt(keys []openpgp.Key, symmetric bool) ([]byte, error) {
 	return fn(keys, symmetric)
 }
 
-func (pkr PassphraseKeyring) ReadMessage(r io.Reader, keyring openpgp.KeyRing, prompt interface{}, config *packet.Config) (md *openpgp.MessageDetails, err error) {
+// A look-alike to "golang.org/x/crypto/opengpg".ReadMessage.  When called it
+// calls the openpgp.ReadMessage function, passing the io.Reader and
+// openpgp.Keyring verbatim but in
+func (pkr PassphraseKeyring) ReadMessage(r io.Reader, keyring openpgp.KeyRing,
+	prompt interface{}, config *packet.Config) (md *openpgp.MessageDetails, err error) {
 	var handler Prompter
 	switch t := prompt.(type) {
 	case Prompter:
