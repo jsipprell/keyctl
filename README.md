@@ -1,4 +1,7 @@
+[![GoDoc](https://godoc.org/github.com/jsipprell/keyctl?status.svg)](https://godoc.org/github.com/jsipprell/keyctl)
+
 # keyctl
+
 A native Go API for the security key management system (aka "keyrings") found in Linux 2.6+
 
 The keyctl interface is nominally provided by three or so Linux-specific syscalls, however it is almost always wrapped
