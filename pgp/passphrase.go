@@ -54,7 +54,7 @@ func (fn prompter) Prompt(keys []openpgp.Key, symmetric bool) ([]byte, error) {
 // calls the openpgp.ReadMessage function, passing the io.Reader and
 // openpgp.Keyring verbatim but in
 func (pkr PassphraseKeyring) ReadMessage(r io.Reader, keyring openpgp.KeyRing,
-	prompt interface{}, config *packet.Config) (md *openpgp.MessageDetails, err error) {
+	prompt interface{}, config *packet.Config) (*openpgp.MessageDetails, error) {
 	var handler Prompter
 	switch t := prompt.(type) {
 	case Prompter:
