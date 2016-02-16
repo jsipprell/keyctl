@@ -10,6 +10,8 @@ package keyctl
 // All Keys and Keyrings have unique 32-bit serial number identifiers.
 type Id interface {
 	Id() int32
+
+	private()
 }
 
 type Keyring interface {
@@ -24,6 +26,9 @@ type keyring struct {
 	defaultTtl uint
 }
 
+func (kr *keyring) private() {}
+
+// Returns the 32-bit kernel identifier of a keyring
 func (kr *keyring) Id() int32 {
 	return int32(kr.id)
 }

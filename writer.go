@@ -37,7 +37,7 @@ func (w *writer) Close() error {
 func (w *writer) Flush() (err error) {
 	if !w.closed {
 		switch t := w.key.(type) {
-		case Keyring:
+		case *keyring:
 			var key Id
 			key, err = t.Add(w.name, w.Bytes())
 			if err == nil {

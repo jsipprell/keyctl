@@ -14,6 +14,9 @@ type Key struct {
 	ttl      time.Duration
 }
 
+func (k *Key) private() {}
+
+// Returns the 32-bit kernel identifier for a specific key
 func (k *Key) Id() int32 {
 	return int32(k.id)
 }
