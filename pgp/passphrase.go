@@ -60,7 +60,9 @@ func (pkr PassphraseKeyring) ReadMessage(r io.Reader, keyring openpgp.KeyRing,
 	case Prompter:
 		handler = t
 	case openpgp.PromptFunction:
-		handler = NewPrompter(t)
+		handler = prompter(t)
+	case func([]openpgp.Key, bool) ([]byte, error):
+		handler = prompter(t)
 	}
 
 	if handler == nil {
