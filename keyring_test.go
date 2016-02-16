@@ -9,12 +9,11 @@ func TestAdd100BytesToUserSessionKeyring(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id, err := ring.Add("blank", make([]byte, 100))
+	key, err := ring.Add("blank", make([]byte, 100))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	key := id.(*Key)
 	t.Logf("added 100 byte empty key as: %v\n", key.Id())
 
 	buf, err := key.Get()
@@ -31,11 +30,10 @@ func TestAdd128BytesToUserSessionExpireAfter10Seconds(t *testing.T) {
 		t.Fatal(err)
 	}
 	ring.SetDefaultTimeout(10)
-	id, err := ring.Add("expire-test", make([]byte, 128))
+	key, err := ring.Add("expire-test", make([]byte, 128))
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := id.(*Key)
 	t.Logf("added 128 byte empty key as: %v\n", key.Id())
 }
 

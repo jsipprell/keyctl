@@ -16,7 +16,7 @@ type Id interface {
 
 type Keyring interface {
 	Id
-	Add(string, []byte) (Id, error)
+	Add(string, []byte) (*Key, error)
 	Search(string) (*Key, error)
 	SetDefaultTimeout(uint)
 }
@@ -40,7 +40,7 @@ func (kr *keyring) SetDefaultTimeout(nsecs uint) {
 }
 
 // Add a new key to a keyring. The key can be searched for later by name.
-func (kr *keyring) Add(name string, key []byte) (Id, error) {
+func (kr *keyring) Add(name string, key []byte) (*Key, error) {
 	r, err := add_key("user", name, key, int32(kr.id))
 	if err == nil {
 		key := &Key{Name: name, id: keyId(r), ring: kr.id}
