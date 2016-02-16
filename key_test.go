@@ -22,12 +22,16 @@ func helperRandBlock(sz int) []byte {
 	return b
 }
 
-func helperCompareBlock(t *testing.T, name string, blk2 []byte) {
-	var key *Key
-
-	ring, err := UserSessionKeyring()
-	if err != nil {
-		t.Fatal(err)
+func helperCompareBlock(t *testing.T, name string, blk2 []byte, ring Keyring) {
+	var (
+		key *Key
+		err error
+	)
+	if ring == nil {
+		ring, err = UserSessionKeyring()
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	key, err = ring.Search(name)
 	if err != nil {
@@ -43,6 +47,10 @@ func helperCompareBlock(t *testing.T, name string, blk2 []byte) {
 		t.Fatal(err)
 	}
 
+	helperCmp(t, blk1, blk2)
+}
+
+func helperCmp(t *testing.T, blk1 []byte, blk2 []byte) {
 	if len(blk1) != len(blk2) {
 		t.Fatalf("data block size mistmatch (%d!=%d)", len(blk1), len(blk2))
 	}
@@ -66,7 +74,7 @@ func TestRandomKey256(t *testing.T) {
 	}
 
 	t.Logf("added %d byte random value key as: %v (%v)\n", len(r256), id.Id(), r256)
-	helperCompareBlock(t, "rand256", r256)
+	helperCompareBlock(t, "rand256", r256, nil)
 }
 
 func TestRandomKey700(t *testing.T) {
@@ -82,7 +90,7 @@ func TestRandomKey700(t *testing.T) {
 	}
 
 	t.Logf("added %d byte random value key as: %v (%v)\n", len(r700), id.Id(), r700)
-	helperCompareBlock(t, "rand700", r700)
+	helperCompareBlock(t, "rand700", r700, nil)
 	time.Sleep(time.Duration(5)*time.Second + time.Duration(250000))
 
 	if _, err = ring.Search("rand700"); err == nil {

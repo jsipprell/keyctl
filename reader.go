@@ -34,3 +34,12 @@ func (r *reader) Read(b []byte) (int, error) {
 func NewReader(key *Key) io.Reader {
 	return &reader{key: key}
 }
+
+// Open an existing key on a keyring given its name
+func OpenReader(name string, ring Keyring) (io.Reader, error) {
+	key, err := ring.Search(name)
+	if err == nil {
+		return NewReader(key), nil
+	}
+	return nil, err
+}
