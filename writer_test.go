@@ -40,6 +40,7 @@ func TestStreamWriterUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	ring, err = CreateKeyring(ring, "test")
 	var key *Key
 
 	for key == nil {
@@ -66,7 +67,7 @@ func TestStreamWriterUpdate(t *testing.T) {
 		t.Fatal("write mismatch (%d!=%d)", len(blk1), i)
 	}
 	helperCompareBlock(t, "test218bytestream", blk1, ring)
-	t.Logf("[flushed] compared %d random block key in common session ring: %v", len(blk1), blk1)
+	t.Logf("[flushed] compared %d random block key in %q ring: %v", len(blk1), ring.(NamedKeyring).Name(), blk1)
 }
 
 func TestStreamWriterFlush(t *testing.T) {
