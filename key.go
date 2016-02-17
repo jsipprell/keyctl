@@ -29,6 +29,11 @@ func (k *Key) ExpireAfter(nsecs uint) error {
 	return err
 }
 
+// Return information about a key.
+func (k *Key) Info() (Info, error) {
+	return getInfo(k.id)
+}
+
 // Get the key's value as a byte slice
 func (k *Key) Get() ([]byte, error) {
 	var (

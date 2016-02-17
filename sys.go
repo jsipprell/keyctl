@@ -145,8 +145,24 @@ func add_key(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
 	return int32(r1), nil
 }
 
+func getfsgid() (int32, error) {
+	var (
+		a1    int32
+		err   error
+		errno syscall.Errno
+		r1    uintptr
+	)
+
+	a1 = -1
+	if r1, _, errno = syscall.Syscall(syscall_setfsgid, uintptr(a1), 0, 0); errno != 0 {
+		err = errno
+		return int32(-1), err
+	}
+	return int32(r1), nil
+}
+
 func newKeyring(id keyId) (*keyring, error) {
-	r1, _, err := keyctl(keyctlGetKeyringId, uintptr(id))
+	r1, _, err := keyctl(keyctlGetKeyringId, uintptr(id), uintptr(1))
 	if err != nil {
 		return nil, err
 	}

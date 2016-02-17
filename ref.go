@@ -3,6 +3,7 @@ package keyctl
 import (
 	"bytes"
 	"errors"
+	"os"
 	"strconv"
 )
 
@@ -27,51 +28,69 @@ type Reference struct {
 
 // Information about a keyctl reference as returned by ref.Info()
 type Info struct {
-	Type, Name, Perm string
-	Uid, Gid         int
+	Type, Name string
+	Uid, Gid   int
+	Perm       KeyPerm
 
 	valid bool
+}
+
+func getInfo(id keyId) (i Info, err error) {
+	var desc []byte
+
+	if desc, err = describeKeyId(id); err != nil {
+		i.Name = err.Error()
+		return
+	}
+
+	fields := bytes.Split(desc, []byte{';'})
+	switch len(fields) {
+	case 5:
+		i.Name = string(fields[4])
+		fallthrough
+	case 4:
+		p, _ := strconv.ParseUint(string(fields[3]), 16, 32)
+		i.Perm = KeyPerm(p)
+		fallthrough
+	case 3:
+		i.Gid, _ = strconv.Atoi(string(fields[2]))
+		fallthrough
+	case 2:
+		i.Uid, _ = strconv.Atoi(string(fields[1]))
+		fallthrough
+	case 1:
+		if i.Type = string(fields[0]); i.Type == "user" {
+			i.Type = "key"
+		}
+		i.valid = true
+	default:
+		panic("invalid field count from kernel keyctl describe sysctl")
+	}
+	return
+}
+
+// Returns permissions in symbolic format.
+func (i Info) Permissions() string {
+	if i.Uid == os.Geteuid() {
+		return encodePerms(uint8(i.Perm >> KeyPerm(16)))
+	} else {
+		fsgid, err := getfsgid()
+		if (err == nil && i.Gid == int(fsgid)) || i.Gid == os.Getegid() {
+			return encodePerms(uint8(i.Perm >> KeyPerm(8)))
+		}
+	}
+	return encodePerms(uint8(i.Perm))
 }
 
 // Return Information about a keyctl reference.
 func (r *Reference) Info() (i Info, err error) {
 	if r.info == nil {
-		var desc []byte
-
-		if desc, err = describeKeyId(keyId(r.Id)); err != nil {
-			i.Name = err.Error()
-			r.info = &i
-			return
-		}
-
-		fields := bytes.Split(desc, []byte{';'})
-		switch len(fields) {
-		case 5:
-			i.Name = string(fields[4])
-			fallthrough
-		case 4:
-			i.Perm = string(fields[3])
-			fallthrough
-		case 3:
-			i.Gid, _ = strconv.Atoi(string(fields[2]))
-			fallthrough
-		case 2:
-			i.Uid, _ = strconv.Atoi(string(fields[1]))
-			fallthrough
-		case 1:
-			if i.Type = string(fields[0]); i.Type == "user" {
-				i.Type = "key"
-			}
-			i.valid = true
-		default:
-			panic("invalid field count from kernel keyctl describe sysctl")
-		}
+		i, err = getInfo(keyId(r.Id))
 		r.info = &i
-	} else {
-		i = *r.info
+		return
 	}
 
-	return
+	return *r.info, err
 }
 
 // Returns true if the Info fetched by ref.Info() is valid.
