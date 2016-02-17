@@ -116,6 +116,7 @@ func add_key(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
 		errno  syscall.Errno
 		b1, b2 *byte
 		r1     uintptr
+		pptr   unsafe.Pointer
 	)
 
 	if b1, err = syscall.BytePtrFromString(keyType); err != nil {
@@ -126,10 +127,13 @@ func add_key(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
 		return 0, err
 	}
 
+	if len(payload) > 0 {
+		pptr = unsafe.Pointer(&payload[0])
+	}
 	r1, _, errno = syscall.Syscall6(syscall_add_key,
 		uintptr(unsafe.Pointer(b1)),
 		uintptr(unsafe.Pointer(b2)),
-		uintptr(unsafe.Pointer(&payload[0])),
+		uintptr(pptr),
 		uintptr(len(payload)),
 		uintptr(id),
 		0)
@@ -150,14 +154,23 @@ func newKeyring(id keyId) (*keyring, error) {
 	return &keyring{id: keyId(r1)}, nil
 }
 
-func searchKeyring(id keyId, name string) (keyId, error) {
+func createKeyring(parent keyId, name string) (*keyring, error) {
+	id, err := add_key("keyring", name, nil, int32(parent))
+	if err != nil {
+		return nil, err
+	}
+
+	return &keyring{id: keyId(id)}, nil
+}
+
+func searchKeyring(id keyId, name, keyType string) (keyId, error) {
 	var (
 		r1     int32
 		b1, b2 *byte
 		err    error
 	)
 
-	if b1, err = syscall.BytePtrFromString("user"); err != nil {
+	if b1, err = syscall.BytePtrFromString(keyType); err != nil {
 		return 0, err
 	}
 	if b2, err = syscall.BytePtrFromString(name); err != nil {

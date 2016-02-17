@@ -80,3 +80,93 @@ func TestUnlinkKey(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func helperTestCreateKeyring(ring Keyring, name string, t *testing.T) NamedKeyring {
+	var err error
+
+	if ring == nil {
+		ring, err = UserSessionKeyring()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if name == "" {
+		name = "testring"
+	}
+	ring, err = CreateKeyring(ring, name)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("created keyring %v named %q", ring.Id(), ring.(NamedKeyring).Name())
+	return ring.(NamedKeyring)
+}
+
+func TestCreateKeyring(t *testing.T) {
+	ring := helperTestCreateKeyring(nil, "", t)
+
+	err := SetKeyringTTL(ring, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCreateNestedKeyring(t *testing.T) {
+	ring := helperTestCreateKeyring(nil, "", t)
+
+	err := SetKeyringTTL(ring, 30)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ring = helperTestCreateKeyring(ring, "testring2", t)
+	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+	ring = helperTestCreateKeyring(ring, "testring3", t)
+	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+}
+
+func TestOpenNestedKeyring(t *testing.T) {
+	us, err := UserSessionKeyring()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ring := helperTestCreateKeyring(us, "", t)
+
+	err = SetKeyringTTL(ring, 30)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ring = helperTestCreateKeyring(ring, "testring2", t)
+	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+	ring = helperTestCreateKeyring(ring, "testring3", t)
+	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+
+	ring, err = OpenKeyring(us, "testring3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("successfully reopened keyring %v named %q", ring.Id(), ring.Name())
+}
+
+func TestUnlinkKeyring(t *testing.T) {
+	ring, err := UserSessionKeyring()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nring, err := CreateKeyring(ring, "testring")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("created keyring %v named %q", nring.Id(), nring.Name())
+
+	err = UnlinkKeyring(nring)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Logf("unlinked keyring %v [%s]", nring.Id(), nring.Name())
+}
