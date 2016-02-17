@@ -151,6 +151,9 @@ func newKeyring(id keyId) (*keyring, error) {
 		return nil, err
 	}
 
+	if id < 0 {
+		r1 = int32(id)
+	}
 	return &keyring{id: keyId(r1)}, nil
 }
 
@@ -179,6 +182,70 @@ func searchKeyring(id keyId, name, keyType string) (keyId, error) {
 
 	r1, _, err = keyctl(keyctlSearch, uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)), uintptr(id))
 	return keyId(r1), err
+}
+
+func describeKeyId(id keyId) ([]byte, error) {
+	var (
+		r1             int32
+		b1             []byte
+		err            error
+		size, sizeRead int
+	)
+
+	b1 = make([]byte, 64)
+	size = len(b1)
+	sizeRead = size + 1
+	for sizeRead > size {
+		r1, _, err = keyctl(keyctlDescribe, uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size))
+		if err != nil {
+			return nil, err
+		}
+
+		if sizeRead = int(r1); sizeRead > size {
+			b1 = make([]byte, sizeRead)
+			size = sizeRead
+			sizeRead++
+		} else {
+			size = sizeRead
+		}
+	}
+
+	return b1[:size-1], nil
+}
+
+func listKeys(id keyId) ([]keyId, error) {
+	var (
+		r1             int32
+		b1             []byte
+		err            error
+		size, sizeRead int
+	)
+
+	bsz := int(unsafe.Sizeof(r1))
+	b1 = make([]byte, 16*bsz)
+	size = len(b1)
+	sizeRead = size + 1
+	for sizeRead > size {
+		r1, _, err = keyctl(keyctlRead, uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size))
+
+		if err != nil {
+			return nil, err
+		}
+
+		if sizeRead = int(r1); sizeRead > size {
+			b1 = make([]byte, sizeRead)
+			size = sizeRead
+			sizeRead++
+		} else {
+			size = sizeRead
+		}
+	}
+	keys := make([]keyId, size/bsz)
+	for i := range keys {
+		keys[i] = *((*keyId)(unsafe.Pointer(&b1[i*bsz])))
+	}
+
+	return keys, nil
 }
 
 func updateKey(id keyId, payload []byte) error {
