@@ -58,9 +58,9 @@ func setClosed(w *writer) {
 	w.closed = true
 }
 
-// Create a new stream writer to write key data to. The writer MUST Close the
-// write stream to flush the key to the kernel.
-func NewWriter(key Id) io.WriteCloser {
+// Create a new stream writer to write key data to. The writer MUST Close() or
+// Flush() the stream before the data will be flushed to the kernel.
+func NewWriter(key *Key) Flusher {
 	return &writer{Buffer: bytes.NewBuffer(make([]byte, 0, 1024)), key: key}
 }
 
