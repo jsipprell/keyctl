@@ -1,6 +1,9 @@
 package keyctl
 
-import "testing"
+import (
+	"syscall"
+	"testing"
+)
 
 func mustInfo(r Reference) Info {
 	info, err := r.Info()
@@ -16,7 +19,7 @@ func helperTestKeyRefs(ring Keyring, t *testing.T) []Reference {
 	var err error
 
 	if ring == nil {
-		if ring, err = UserSessionKeyring(); err != nil {
+		if ring, err = SessionKeyring(); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -33,14 +36,29 @@ func helperTestKeyRefs(ring Keyring, t *testing.T) []Reference {
 	return refs
 }
 
+func filterErrno(e error, ignore ...syscall.Errno) error {
+	if en, ok := e.(syscall.Errno); ok {
+		for _, enok := range ignore {
+			if enok == en {
+				return nil
+			}
+		}
+	}
+
+	return e
+}
+
 func helperRecurseKeyringRefs(kr Keyring, t *testing.T) {
 	for _, r := range helperTestKeyRefs(kr, t) {
 		if !r.Valid() {
 			continue
 		}
 		key, err := r.Get()
-		if err != nil {
+		if filterErrno(err, syscall.EPERM, syscall.EACCES) != nil {
 			t.Fatal(err)
+		}
+		if err != nil {
+			return
 		}
 		switch k := key.(type) {
 		case *namedKeyring:
@@ -52,8 +70,8 @@ func helperRecurseKeyringRefs(kr Keyring, t *testing.T) {
 		case *Key:
 			t.Logf("key %v: %q, keyring %v", k.id, k.Name, k.ring)
 			data, err := k.Get()
-			if err != nil {
-				t.Fatal(err)
+			if filterErrno(err, syscall.EPERM, syscall.EACCES) != nil {
+				t.Fatalf("%v %T(%d)", err, err, err)
 			}
 			t.Logf("   %v: %v", k.id, data)
 		default:
@@ -62,6 +80,6 @@ func helperRecurseKeyringRefs(kr Keyring, t *testing.T) {
 	}
 }
 
-func TestUserSessionKeyringRefs(t *testing.T) {
+func TestSessionKeyringRefs(t *testing.T) {
 	helperRecurseKeyringRefs(nil, t)
 }
