@@ -83,7 +83,7 @@ func ImportArmoredInto(kr *KeyRing, r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	return importInto(kr, ar, openpgp.ReadArmoredKeyRing)
+	return importInto(kr, ar, openpgp.ReadKeyRing)
 }
 
 func Import(r io.Reader) (*KeyRing, error) {
@@ -101,7 +101,7 @@ func ImportArmored(r io.Reader) (*KeyRing, error) {
 	if err == nil {
 		var ar importReader
 		if ar, err = capture.NewArmored(r); err == nil {
-			err = importInto(kr, ar, openpgp.ReadArmoredKeyRing)
+			err = importInto(kr, ar, openpgp.ReadKeyRing)
 		}
 	}
 	return kr, err

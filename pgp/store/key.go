@@ -129,7 +129,7 @@ func getKeyWriter(kr *KeyRing, k *Key, v keyIdStringer) (keyctl.Flusher, error) 
 	switch t := v.(type) {
 	case privateKeyWithId:
 		name = []string{privKeyPrefix, t.KeyIdString()}
-		if !t.isEncrypted() {
+		if t.isEncrypted() {
 			key = k.privkeyctl
 			ring = kr.PrivateKeyring
 		} else {
@@ -168,7 +168,8 @@ func writeKey(kr *KeyRing, getPriv func(uint64) ([]byte, bool), k *Key) error {
 			}
 			if err == nil {
 				if err = k.Entity.Serialize(w); err == nil {
-					w.Flush()
+					w.Close()
+					w = nil
 					k.flags &= ^(storePublic | storeSubkeys)
 				}
 			}
@@ -204,6 +205,28 @@ func writeKey(kr *KeyRing, getPriv func(uint64) ([]byte, bool), k *Key) error {
 			if err == nil {
 				// spew.Dump(data)
 				if _, err = w.Write(data); err == nil {
+					for _, ident := range k.Entity.Identities {
+						if err = ident.UserId.Serialize(w); err != nil {
+							break
+						}
+						if err = ident.SelfSignature.Serialize(w); err != nil {
+							break
+						}
+					}
+					if err == nil {
+						for _, subkey := range k.Entity.Subkeys {
+							if subkey.PrivateKey != nil {
+								if err = subkey.PrivateKey.Serialize(w); err != nil {
+									break
+								}
+							}
+							if err = subkey.Sig.Serialize(w); err != nil {
+								break
+							}
+						}
+					}
+				}
+				if err == nil {
 					w.Close()
 				} else {
 					panic(err)

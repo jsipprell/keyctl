@@ -233,7 +233,11 @@ func (r *Reader) Read(p []byte) (int, error) {
 	r.pr = &packetReader{r: r.r, capturing: true}
 	tag, _, _, err := readHeader(r.pr)
 	if err != nil {
-		return -1, err
+		uncapture(r.pr)
+		if r.pr.c.Len() > 0 {
+			return r.pr.Read(p)
+		}
+		return 0, err
 	}
 	pkt, err := packet.Read(io.MultiReader(bytes.NewBuffer(r.pr.c.Bytes()), r.pr))
 	if err == nil {
