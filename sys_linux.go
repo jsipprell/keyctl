@@ -196,7 +196,7 @@ func searchKeyring(id keyId, name, keyType string) (keyId, error) {
 		return 0, err
 	}
 
-	r1, _, err = keyctl(keyctlSearch, uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)), uintptr(id))
+	r1, _, err = keyctl(keyctlSearch, uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)))
 	return keyId(r1), err
 }
 
