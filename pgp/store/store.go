@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/jsipprell/keyctl"
 )
@@ -11,6 +12,10 @@ import (
 const (
 	defaultGroupPerm = keyctl.PermGroupAll ^ (keyctl.PermGroupWrite | keyctl.PermGroupSetattr)
 	defaultOtherPerm = keyctl.PermOtherAll ^ (keyctl.PermOtherWrite | keyctl.PermOtherSetattr)
+
+	privKeyPrefix         = "pgp-privkey"
+	pubKeyPrefix          = "pgp-pubkey"
+	defaultLiveKeyringTTL = 5 // nsecs decrypted keys live in live keyring
 )
 
 type KeyRing struct {
@@ -37,14 +42,21 @@ type KeyRing struct {
 	// passphrase that can be discovered by calling LivePassphraseKey().
 	LiveKeyring keyctl.Keyring
 
-	livekey *keyctl.Key
-	init    sync.Once
+	LiveKeyringTTL time.Duration
+
+	init sync.Once
 }
 
 func initialize(kr *KeyRing) (err error) {
 	if kr.Rand == nil {
 		kr.Rand = rand.Reader
 	}
+	if kr.LiveKeyringTTL == 0 {
+		kr.LiveKeyringTTL = time.Duration(defaultLiveKeyringTTL) * time.Second
+	} else if kr.LiveKeyringTTL < 0 {
+		kr.LiveKeyringTTL = 0
+	}
+
 	if kr.RootKeyring == nil {
 		if kr.RootKeyring, err = keyctl.SessionKeyring(); err != nil {
 			return
@@ -52,7 +64,7 @@ func initialize(kr *KeyRing) (err error) {
 	}
 
 	if kr.PublicKeyring == nil {
-		if kr.PublicKeyring, err = openOrCreate(kr.RootKeyring, "pgp-pubkey"); err != nil {
+		if kr.PublicKeyring, err = openOrCreate(kr.RootKeyring, pubKeyPrefix); err != nil {
 			return
 		}
 		if err = keyctl.SetPerm(kr.PublicKeyring, defaultGroupPerm|defaultOtherPerm|keyctl.PermUserAll); err != nil {
@@ -60,8 +72,19 @@ func initialize(kr *KeyRing) (err error) {
 		}
 	}
 
+	if kr.LiveKeyring == nil {
+		if kr.LiveKeyring, err = openOrCreate(kr.RootKeyring, privKeyPrefix+"-live"); err != nil {
+			return
+		}
+		if kr.LiveKeyringTTL/time.Second > 0 {
+			kr.LiveKeyring.SetDefaultTimeout(uint(kr.LiveKeyringTTL / time.Second))
+		}
+		if err = keyctl.SetPerm(kr.LiveKeyring, keyctl.PermUserAll); err != nil {
+			return
+		}
+	}
 	if kr.PrivateKeyring == nil {
-		if kr.PrivateKeyring, err = openOrCreate(kr.RootKeyring, "pgp-privkey"); err != nil {
+		if kr.PrivateKeyring, err = openOrCreate(kr.LiveKeyring, privKeyPrefix); err != nil {
 			return
 		}
 		if err = keyctl.SetPerm(kr.PrivateKeyring, keyctl.PermUserAll); err != nil {
@@ -69,14 +92,6 @@ func initialize(kr *KeyRing) (err error) {
 		}
 	}
 
-	if kr.LiveKeyring == nil {
-		if kr.LiveKeyring, err = openOrCreate(kr.PrivateKeyring, "pgp-privkey-live"); err != nil {
-			return
-		}
-		if err = keyctl.SetPerm(kr.LiveKeyring, keyctl.PermUserAll); err != nil {
-			return
-		}
-	}
 	return
 }
 
