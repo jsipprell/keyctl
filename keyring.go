@@ -19,7 +19,9 @@ type Id interface {
 type Keyring interface {
 	Id
 	Add(string, []byte) (*Key, error)
+	AddWithType(string, string, []byte) (*Key, error)
 	Search(string) (*Key, error)
+	SearchWithType(string, string) (*Key, error)
 	SetDefaultTimeout(uint)
 }
 
@@ -69,8 +71,8 @@ func (kr *keyring) SetDefaultTimeout(nsecs uint) {
 }
 
 // Add a new key to a keyring. The key can be searched for later by name.
-func (kr *keyring) Add(name string, key []byte) (*Key, error) {
-	r, err := add_key("user", name, key, int32(kr.id))
+func (kr *keyring) AddWithType(name, keyType string, key []byte) (*Key, error) {
+	r, err := add_key(keyType, name, key, int32(kr.id))
 	if err == nil {
 		key := &Key{Name: name, id: keyId(r), ring: kr.id}
 		if kr.defaultTtl != 0 {
@@ -82,15 +84,25 @@ func (kr *keyring) Add(name string, key []byte) (*Key, error) {
 	return nil, err
 }
 
+// Add a new key of type "user"
+func (kr *keyring) Add(name string, key []byte) (*Key, error) {
+	return kr.AddWithType(name, "user", key)
+}
+
 // Search for a key by name, this also searches child keyrings linked to this
 // one. The key, if found, is linked to the top keyring that Search() was called
 // from.
-func (kr *keyring) Search(name string) (*Key, error) {
-	id, err := searchKeyring(kr.id, name, "user")
+func (kr *keyring) SearchWithType(name, keyType string) (*Key, error) {
+	id, err := searchKeyring(kr.id, name, keyType)
 	if err == nil {
 		return &Key{Name: name, id: id, ring: kr.id}, nil
 	}
 	return nil, err
+}
+
+// Search for a key of type "user"
+func (kr *keyring) Search(name string) (*Key, error) {
+	return kr.SearchWithType(name, "user")
 }
 
 // Return the current login session keyring
