@@ -146,7 +146,7 @@ func CreateKeyring(parent Keyring, name string) (NamedKeyring, error) {
 	}
 
 	if ttl > 0 {
-		_, _, err = keyctl(keyctlSetTimeout, uintptr(ring.id), uintptr(ttl))
+		err = keyctl_SetTimeout(ring.id, ttl)
 	}
 
 	return ring, nil
@@ -172,7 +172,7 @@ func OpenKeyring(parent Keyring, name string) (NamedKeyring, error) {
 // Only named keyrings can have their time-to-live set, the in-built keyrings
 // cannot (Session, UserSession, etc).
 func SetKeyringTTL(kr NamedKeyring, nsecs uint) error {
-	_, _, err := keyctl(keyctlSetTimeout, uintptr(kr.Id()), uintptr(nsecs))
+	err := keyctl_SetTimeout(keyId(kr.Id()), nsecs)
 	if err == nil {
 		kr.(*namedKeyring).ttl = nsecs
 	}
@@ -181,12 +181,10 @@ func SetKeyringTTL(kr NamedKeyring, nsecs uint) error {
 
 // Unlink an object from a keyring
 func Unlink(parent Keyring, child Id) error {
-	_, _, err := keyctl(keyctlUnlink, uintptr(parent.Id()), uintptr(child.Id()))
-	return err
+	return keyctl_Unlink(keyId(parent.Id()), keyId(child.Id()))
 }
 
 // Unlink a named keyring from its parent.
 func UnlinkKeyring(kr NamedKeyring) error {
-	_, _, err := keyctl(keyctlUnlink, uintptr(kr.Id()), uintptr(kr.(*namedKeyring).parent))
-	return err
+	return keyctl_Unlink(keyId(kr.Id()), kr.(*namedKeyring).parent)
 }

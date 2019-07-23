@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func TestAdd100BytesToUserSessionKeyring(t *testing.T) {
-	ring, err := UserSessionKeyring()
+func TestAdd100BytesToSessionKeyring(t *testing.T) {
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,8 +24,8 @@ func TestAdd100BytesToUserSessionKeyring(t *testing.T) {
 	t.Logf("read %d octets from key: %v\n", len(buf), buf)
 }
 
-func TestAdd128BytesToUserSessionExpireAfter10Seconds(t *testing.T) {
-	ring, err := UserSessionKeyring()
+func TestAdd128BytesToSessionExpireAfter10Seconds(t *testing.T) {
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestAdd128BytesToUserSessionExpireAfter10Seconds(t *testing.T) {
 }
 
 func TestFetchKey(t *testing.T) {
-	ring, err := UserSessionKeyring()
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestFetchKey(t *testing.T) {
 }
 
 func TestFetchKeyFail(t *testing.T) {
-	ring, err := UserSessionKeyring()
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestFetchKeyFail(t *testing.T) {
 }
 
 func TestUnlinkKey(t *testing.T) {
-	ring, err := UserSessionKeyring()
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func helperTestCreateKeyring(ring Keyring, name string, t *testing.T) NamedKeyri
 	var err error
 
 	if ring == nil {
-		ring, err = UserSessionKeyring()
+		ring, err = SessionKeyring()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -127,7 +127,7 @@ func TestCreateNestedKeyring(t *testing.T) {
 }
 
 func TestOpenNestedKeyring(t *testing.T) {
-	us, err := UserSessionKeyring()
+	us, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,7 +151,7 @@ func TestOpenNestedKeyring(t *testing.T) {
 }
 
 func TestUnlinkKeyring(t *testing.T) {
-	ring, err := UserSessionKeyring()
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}

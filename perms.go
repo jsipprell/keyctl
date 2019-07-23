@@ -94,20 +94,17 @@ func (p KeyPerm) String() string {
 func Chown(k Id, user int) error {
 	group := -1
 
-	_, _, err := keyctl(keyctlChown, uintptr(k.Id()), uintptr(user), uintptr(group))
-	return err
+	return keyctl_Chown(keyId(k.Id()), user, group)
 }
 
 // Change group ownership on a key or keyring.
 func Chgrp(k Id, group int) error {
 	user := -1
 
-	_, _, err := keyctl(keyctlChown, uintptr(k.Id()), uintptr(user), uintptr(group))
-	return err
+	return keyctl_Chown(keyId(k.Id()), user, group)
 }
 
 // Set permissions on a key or keyring.
 func SetPerm(k Id, p KeyPerm) error {
-	_, _, err := keyctl(keyctlSetPerm, uintptr(k.Id()), uintptr(p))
-	return err
+	return keyctl_SetPerm(keyId(k.Id()), uint32(p))
 }

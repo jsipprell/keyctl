@@ -28,7 +28,7 @@ func helperCompareBlock(t *testing.T, name string, blk2 []byte, ring Keyring) {
 		err error
 	)
 	if ring == nil {
-		ring, err = UserSessionKeyring()
+		ring, err = SessionKeyring()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -63,7 +63,7 @@ func helperCmp(t *testing.T, blk1 []byte, blk2 []byte) {
 }
 
 func TestRandomKey256(t *testing.T) {
-	ring, err := UserSessionKeyring()
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestRandomKey256(t *testing.T) {
 }
 
 func TestRandomKey700(t *testing.T) {
-	ring, err := UserSessionKeyring()
+	ring, err := SessionKeyring()
 	if err != nil {
 		t.Fatal(err)
 	}

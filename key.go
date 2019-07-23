@@ -2,7 +2,6 @@ package keyctl
 
 import (
 	"time"
-	"unsafe"
 )
 
 // Represents a single key linked to one or more kernel keyrings.
@@ -25,8 +24,7 @@ func (k *Key) Id() int32 {
 func (k *Key) ExpireAfter(nsecs uint) error {
 	k.ttl = time.Duration(nsecs) * time.Second
 
-	_, _, err := keyctl(keyctlSetTimeout, uintptr(k.id), uintptr(nsecs))
-	return err
+	return keyctl_SetTimeout(k.id, nsecs)
 }
 
 // Return information about a key.
@@ -51,7 +49,7 @@ func (k *Key) Get() ([]byte, error) {
 	b = make([]byte, int(size))
 	sizeRead = size + 1
 	for sizeRead > size {
-		r1, _, err := keyctl(keyctlRead, uintptr(k.id), uintptr(unsafe.Pointer(&b[0])), uintptr(size))
+		r1, err := keyctl_Read(k.id, &b[0], size)
 		if err != nil {
 			return nil, err
 		}
@@ -79,6 +77,5 @@ func (k *Key) Set(b []byte) error {
 // Unlink a key from the keyring it was loaded from (or added to). If the key
 // is not linked to any other keyrings, it is destroyed.
 func (k *Key) Unlink() error {
-	_, _, err := keyctl(keyctlUnlink, uintptr(k.id), uintptr(k.ring))
-	return err
+	return keyctl_Unlink(k.id, k.ring)
 }

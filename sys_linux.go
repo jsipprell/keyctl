@@ -1,7 +1,6 @@
 package keyctl
 
 import (
-	"log"
 	"syscall"
 	"unsafe"
 )
@@ -86,28 +85,45 @@ func (cmd keyctlCommand) String() string {
 	panic("bad arg")
 }
 
-func keyctl(cmd keyctlCommand, args ...uintptr) (r1 int32, r2 int32, err error) {
-	a := make([]uintptr, 6)
-	l := len(args)
-	if l > 5 {
-		l = 5
-	}
-	a[0] = uintptr(cmd)
-	for idx, v := range args[:l] {
-		a[idx+1] = v
-	}
-	if debugSyscalls {
-		log.Printf("%v: %v %v\n", syscall_keyctl, cmd, a[1:])
-	}
-	v1, v2, errno := syscall.Syscall6(syscall_keyctl, a[0], a[1], a[2], a[3], a[4], a[5])
+func keyctl_SetTimeout(id keyId, nsecs uint) error {
+	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlSetTimeout), uintptr(id), uintptr(nsecs))
 	if errno != 0 {
-		err = errno
-		return
+		return errno
+	}
+	return nil
+}
+
+func keyctl_Read(id keyId, b *byte, size int) (int32, error) {
+	v1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlRead), uintptr(id), uintptr(unsafe.Pointer(b)), uintptr(size), 0, 0)
+	if errno != 0 {
+		return -1, errno
 	}
 
-	r1 = int32(v1)
-	r2 = int32(v2)
-	return
+	return int32(v1), nil
+}
+
+func keyctl_Unlink(id, ring keyId) error {
+	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlUnlink), uintptr(id), uintptr(ring))
+	if errno != 0 {
+		return errno
+	}
+	return nil
+}
+
+func keyctl_Chown(id keyId, user, group int) error {
+	_, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlChown), uintptr(id), uintptr(user), uintptr(group), 0, 0)
+	if errno != 0 {
+		return errno
+	}
+	return nil
+}
+
+func keyctl_SetPerm(id keyId, perm uint32) error {
+	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlSetPerm), uintptr(id), uintptr(perm))
+	if errno != 0 {
+		return errno
+	}
+	return nil
 }
 
 func add_key(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
@@ -162,15 +178,15 @@ func getfsgid() (int32, error) {
 }
 
 func newKeyring(id keyId) (*keyring, error) {
-	r1, _, err := keyctl(keyctlGetKeyringId, uintptr(id), uintptr(1))
-	if err != nil {
-		return nil, err
+	r1, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlGetKeyringId), uintptr(id), uintptr(1))
+	if errno != 0 {
+		return nil, errno
 	}
 
-	if id < 0 {
-		r1 = int32(id)
+	if id >= 0 {
+		id = keyId(r1)
 	}
-	return &keyring{id: keyId(r1)}, nil
+	return &keyring{id: id}, nil
 }
 
 func createKeyring(parent keyId, name string) (*keyring, error) {
@@ -184,7 +200,6 @@ func createKeyring(parent keyId, name string) (*keyring, error) {
 
 func searchKeyring(id keyId, name, keyType string) (keyId, error) {
 	var (
-		r1     int32
 		b1, b2 *byte
 		err    error
 	)
@@ -195,16 +210,16 @@ func searchKeyring(id keyId, name, keyType string) (keyId, error) {
 	if b2, err = syscall.BytePtrFromString(name); err != nil {
 		return 0, err
 	}
-
-	r1, _, err = keyctl(keyctlSearch, uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)))
+	r1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlSearch), uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)), 0, 0)
+	if errno != 0 {
+		err = errno
+	}
 	return keyId(r1), err
 }
 
 func describeKeyId(id keyId) ([]byte, error) {
 	var (
-		r1             int32
 		b1             []byte
-		err            error
 		size, sizeRead int
 	)
 
@@ -212,11 +227,10 @@ func describeKeyId(id keyId) ([]byte, error) {
 	size = len(b1)
 	sizeRead = size + 1
 	for sizeRead > size {
-		r1, _, err = keyctl(keyctlDescribe, uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size))
-		if err != nil {
-			return nil, err
+		r1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlDescribe), uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size), 0, 0)
+		if errno != 0 {
+			return nil, errno
 		}
-
 		if sizeRead = int(r1); sizeRead > size {
 			b1 = make([]byte, sizeRead)
 			size = sizeRead
@@ -231,21 +245,18 @@ func describeKeyId(id keyId) ([]byte, error) {
 
 func listKeys(id keyId) ([]keyId, error) {
 	var (
-		r1             int32
 		b1             []byte
-		err            error
 		size, sizeRead int
 	)
 
-	bsz := int(unsafe.Sizeof(r1))
+	bsz := 4
 	b1 = make([]byte, 16*bsz)
 	size = len(b1)
 	sizeRead = size + 1
 	for sizeRead > size {
-		r1, _, err = keyctl(keyctlRead, uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size))
-
-		if err != nil {
-			return nil, err
+		r1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlRead), uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size), 0, 0)
+		if errno != 0 {
+			return nil, errno
 		}
 
 		if sizeRead = int(r1); sizeRead > size {
@@ -269,6 +280,9 @@ func updateKey(id keyId, payload []byte) error {
 	if size == 0 {
 		payload = make([]byte, 1)
 	}
-	_, _, err := keyctl(keyctlUpdate, uintptr(id), uintptr(unsafe.Pointer(&payload[0])), uintptr(size))
-	return err
+	_, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlUpdate), uintptr(id), uintptr(unsafe.Pointer(&payload[0])), uintptr(size), 0, 0)
+	if errno != 0 {
+		return errno
+	}
+	return nil
 }

@@ -26,7 +26,7 @@ func TestStreamWriter(t *testing.T) {
 	}
 
 	if i != len(blk1) {
-		t.Fatal("write mismatch (%d!=%d)", len(blk1), i)
+		t.Fatalf("write mismatch (%d!=%d)", len(blk1), i)
 	}
 	helperCompareBlock(t, "test1544bytestream", blk1, ring)
 	t.Logf("compared %d random block key in common session ring: %v", len(blk1), blk1[:200])
@@ -64,7 +64,7 @@ func TestStreamWriterUpdate(t *testing.T) {
 	}
 
 	if i != len(blk1) {
-		t.Fatal("write mismatch (%d!=%d)", len(blk1), i)
+		t.Fatalf("write mismatch (%d!=%d)", len(blk1), i)
 	}
 	helperCompareBlock(t, "test218bytestream", blk1, ring)
 	t.Logf("[flushed] compared %d random block key in %q ring: %v", len(blk1), ring.(NamedKeyring).Name(), blk1)
@@ -92,7 +92,7 @@ func TestStreamWriterFlush(t *testing.T) {
 	}
 
 	if i != len(blk1) {
-		t.Fatal("write mismatch (%d!=%d)", len(blk1), i)
+		t.Fatalf("write mismatch (%d!=%d)", len(blk1), i)
 	}
 	helperCompareBlock(t, "test218bytestream", blk1, ring)
 	t.Logf("[flushed] compared %d random block key in common session ring: %v", len(blk1), blk1)
