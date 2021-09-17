@@ -181,7 +181,7 @@ func SetKeyringTTL(kr NamedKeyring, nsecs uint) error {
 
 // Unlink an object from a keyring
 func Unlink(parent Keyring, child Id) error {
-	return keyctl_Unlink(keyId(parent.Id()), keyId(child.Id()))
+	return keyctl_Unlink(keyId(child.Id()), keyId(parent.Id()))
 }
 
 // Unlink a named keyring from its parent.
