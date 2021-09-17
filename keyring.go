@@ -179,6 +179,11 @@ func SetKeyringTTL(kr NamedKeyring, nsecs uint) error {
 	return err
 }
 
+// Link an object to a keyring
+func Link(parent Keyring, child Id) error {
+	return keyctl_Link(keyId(child.Id()), keyId(parent.Id()))
+}
+
 // Unlink an object from a keyring
 func Unlink(parent Keyring, child Id) error {
 	return keyctl_Unlink(keyId(child.Id()), keyId(parent.Id()))
