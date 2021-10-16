@@ -73,7 +73,7 @@ func TestRandomKey256(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("added %d byte random value key as: %v (%v)\n", len(r256), id.Id(), r256)
+	t.Logf("added %d byte random value key as: %v (%v)\n", len(r256), id.ID(), r256)
 	helperCompareBlock(t, "rand256", r256, nil)
 }
 
@@ -89,12 +89,12 @@ func TestRandomKey700(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("added %d byte random value key as: %v (%v)\n", len(r700), id.Id(), r700)
+	t.Logf("added %d byte random value key as: %v (%v)\n", len(r700), id.ID(), r700)
 	helperCompareBlock(t, "rand700", r700, nil)
 	time.Sleep(time.Duration(5)*time.Second + time.Duration(250000))
 
 	if _, err = ring.Search("rand700"); err == nil {
 		t.Fatal("'rand700' key did not expire in five seconds")
 	}
-	t.Logf("key %v expired after five seconds", id.Id())
+	t.Logf("key %v expired after five seconds", id.ID())
 }

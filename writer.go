@@ -6,18 +6,19 @@ import (
 	"io"
 )
 
+// Flusher is interface implementing io.Writer, io.Closer and `Flush` function
 type Flusher interface {
 	io.Writer
 	io.Closer
 	Flush() error
 }
 
-// Error returned when attempting to close or flush an already closed stream
+// ErrStreamClosed error is returned when attempting to close or flush an already closed stream
 var ErrStreamClosed = errors.New("keyctl write stream closed")
 
 type writer struct {
 	*bytes.Buffer
-	key    Id
+	key    ID
 	name   string
 	closed bool
 }
@@ -38,7 +39,7 @@ func (w *writer) Flush() (err error) {
 	if !w.closed {
 		switch t := w.key.(type) {
 		case Keyring:
-			var key Id
+			var key ID
 			key, err = t.Add(w.name, w.Bytes())
 			if err == nil {
 				w.key = key
@@ -58,13 +59,13 @@ func setClosed(w *writer) {
 	w.closed = true
 }
 
-// Create a new stream writer to write key data to. The writer MUST Close() or
+// NewWriter creates a new stream writer to write key data to. The writer MUST Close() or
 // Flush() the stream before the data will be flushed to the kernel.
 func NewWriter(key *Key) Flusher {
 	return &writer{Buffer: bytes.NewBuffer(make([]byte, 0, 1024)), key: key}
 }
 
-// Create a new key and stream writer with a given name on an open keyring.
+// CreateWriter makes a new key and stream writer with a given name on an open keyring.
 func CreateWriter(name string, ring Keyring) (Flusher, error) {
 	return &writer{Buffer: bytes.NewBuffer(make([]byte, 0, 1024)), key: ring, name: name}, nil
 }

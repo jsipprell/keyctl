@@ -4,30 +4,30 @@ import (
 	"time"
 )
 
-// Represents a single key linked to one or more kernel keyrings.
+// Key represents a single key linked to one or more kernel keyrings.
 type Key struct {
 	Name string
 
-	id, ring keyId
+	id, ring keyID
 	size     int
 	ttl      time.Duration
 }
 
 func (k *Key) private() {}
 
-// Returns the 32-bit kernel identifier for a specific key
-func (k *Key) Id() int32 {
+// ID returns the 32-bit kernel identifier for a specific key
+func (k *Key) ID() int32 {
 	return int32(k.id)
 }
 
-// To expire a key automatically after some period of time call this method.
+// ExpireAfter makes key expire automatically after some period of time call this method.
 func (k *Key) ExpireAfter(nsecs uint) error {
 	k.ttl = time.Duration(nsecs) * time.Second
 
-	return keyctl_SetTimeout(k.id, nsecs)
+	return keyctlSetTimeoutFunc(k.id, nsecs)
 }
 
-// Return information about a key.
+// Info return information about a key.
 func (k *Key) Info() (Info, error) {
 	return getInfo(k.id)
 }
@@ -46,10 +46,10 @@ func (k *Key) Get() ([]byte, error) {
 
 	size := k.size
 
-	b = make([]byte, int(size))
+	b = make([]byte, size)
 	sizeRead = size + 1
 	for sizeRead > size {
-		r1, err := keyctl_Read(k.id, &b[0], size)
+		r1, err := keyctlReadFunc(k.id, &b[0], size)
 		if err != nil {
 			return nil, err
 		}
@@ -77,5 +77,5 @@ func (k *Key) Set(b []byte) error {
 // Unlink a key from the keyring it was loaded from (or added to). If the key
 // is not linked to any other keyrings, it is destroyed.
 func (k *Key) Unlink() error {
-	return keyctl_Unlink(k.id, k.ring)
+	return keyctlUnlinkFunc(k.id, k.ring)
 }

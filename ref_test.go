@@ -30,7 +30,7 @@ func helperTestKeyRefs(ring Keyring, t *testing.T) []Reference {
 	}
 
 	for _, r := range refs {
-		t.Logf("%d: %+v [%s]\n", r.Id, mustInfo(r), mustInfo(r).Permissions())
+		t.Logf("%d: %+v [%s]\n", r.ID, mustInfo(r), mustInfo(r).Permissions())
 	}
 
 	return refs

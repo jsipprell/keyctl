@@ -7,20 +7,20 @@ import (
 
 type keyctlCommand int
 
-type keyId int32
+type keyID int32
 
 const (
-	keySpecThreadKeyring      keyId = -1
-	keySpecProcessKeyring     keyId = -2
-	keySpecSessionKeyring     keyId = -3
-	keySpecUserKeyring        keyId = -4
-	keySpecUserSessionKeyring keyId = -5
-	keySpecGroupKeyring       keyId = -6
-	keySpecReqKeyAuthKey      keyId = -7
+	keySpecThreadKeyring      keyID = -1
+	keySpecProcessKeyring     keyID = -2
+	keySpecSessionKeyring     keyID = -3
+	keySpecUserKeyring        keyID = -4
+	keySpecUserSessionKeyring keyID = -5
+	keySpecGroupKeyring       keyID = -6
+	keySpecReqKeyAuthKey      keyID = -7
 )
 
 const (
-	keyctlGetKeyringId keyctlCommand = iota
+	keyctlGetKeyringID keyctlCommand = iota
 	keyctlJoinSessionKeyring
 	keyctlUpdate
 	keyctlRevoke
@@ -41,14 +41,14 @@ const (
 
 var debugSyscalls bool
 
-func (id keyId) Id() int32 {
+func (id keyID) ID() int32 {
 	return int32(id)
 }
 
 func (cmd keyctlCommand) String() string {
 	switch cmd {
-	case keyctlGetKeyringId:
-		return "keyctlGetKeyringId"
+	case keyctlGetKeyringID:
+		return "keyctlGetKeyringID"
 	case keyctlJoinSessionKeyring:
 		return "keyctlJoinSessionKeyring"
 	case keyctlUpdate:
@@ -85,16 +85,16 @@ func (cmd keyctlCommand) String() string {
 	panic("bad arg")
 }
 
-func keyctl_SetTimeout(id keyId, nsecs uint) error {
-	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlSetTimeout), uintptr(id), uintptr(nsecs))
+func keyctlSetTimeoutFunc(id keyID, nsecs uint) error {
+	_, _, errno := syscall.Syscall(syscallKeyctlPTR, uintptr(keyctlSetTimeout), uintptr(id), uintptr(nsecs))
 	if errno != 0 {
 		return errno
 	}
 	return nil
 }
 
-func keyctl_Read(id keyId, b *byte, size int) (int32, error) {
-	v1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlRead), uintptr(id), uintptr(unsafe.Pointer(b)), uintptr(size), 0, 0)
+func keyctlReadFunc(id keyID, b *byte, size int) (int32, error) {
+	v1, _, errno := syscall.Syscall6(syscallKeyctlPTR, uintptr(keyctlRead), uintptr(id), uintptr(unsafe.Pointer(b)), uintptr(size), 0, 0)
 	if errno != 0 {
 		return -1, errno
 	}
@@ -102,39 +102,39 @@ func keyctl_Read(id keyId, b *byte, size int) (int32, error) {
 	return int32(v1), nil
 }
 
-func keyctl_Link(id, ring keyId) error {
-	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlLink), uintptr(id), uintptr(ring))
+func keyctlLinkFunc(id, ring keyID) error {
+	_, _, errno := syscall.Syscall(syscallKeyctlPTR, uintptr(keyctlLink), uintptr(id), uintptr(ring))
 	if errno != 0 {
 		return errno
 	}
 	return nil
 }
 
-func keyctl_Unlink(id, ring keyId) error {
-	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlUnlink), uintptr(id), uintptr(ring))
+func keyctlUnlinkFunc(id, ring keyID) error {
+	_, _, errno := syscall.Syscall(syscallKeyctlPTR, uintptr(keyctlUnlink), uintptr(id), uintptr(ring))
 	if errno != 0 {
 		return errno
 	}
 	return nil
 }
 
-func keyctl_Chown(id keyId, user, group int) error {
-	_, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlChown), uintptr(id), uintptr(user), uintptr(group), 0, 0)
+func keyctlChownFunc(id keyID, user, group int) error {
+	_, _, errno := syscall.Syscall6(syscallKeyctlPTR, uintptr(keyctlChown), uintptr(id), uintptr(user), uintptr(group), 0, 0)
 	if errno != 0 {
 		return errno
 	}
 	return nil
 }
 
-func keyctl_SetPerm(id keyId, perm uint32) error {
-	_, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlSetPerm), uintptr(id), uintptr(perm))
+func keyctlSetPermFunc(id keyID, perm uint32) error {
+	_, _, errno := syscall.Syscall(syscallKeyctlPTR, uintptr(keyctlSetPerm), uintptr(id), uintptr(perm))
 	if errno != 0 {
 		return errno
 	}
 	return nil
 }
 
-func add_key(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
+func addKeyFunc(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
 	var (
 		err    error
 		errno  syscall.Errno
@@ -154,7 +154,7 @@ func add_key(keyType, keyDesc string, payload []byte, id int32) (int32, error) {
 	if len(payload) > 0 {
 		pptr = unsafe.Pointer(&payload[0])
 	}
-	r1, _, errno = syscall.Syscall6(syscall_add_key,
+	r1, _, errno = syscall.Syscall6(syscallAddKeyPTR,
 		uintptr(unsafe.Pointer(b1)),
 		uintptr(unsafe.Pointer(b2)),
 		uintptr(pptr),
@@ -178,35 +178,35 @@ func getfsgid() (int32, error) {
 	)
 
 	a1 = -1
-	if r1, _, errno = syscall.Syscall(syscall_setfsgid, uintptr(a1), 0, 0); errno != 0 {
+	if r1, _, errno = syscall.Syscall(syscallSetFSGIDPTR, uintptr(a1), 0, 0); errno != 0 {
 		err = errno
 		return int32(-1), err
 	}
 	return int32(r1), nil
 }
 
-func newKeyring(id keyId) (*keyring, error) {
-	r1, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlGetKeyringId), uintptr(id), uintptr(1))
+func newKeyring(id keyID) (*keyring, error) {
+	r1, _, errno := syscall.Syscall(syscallKeyctlPTR, uintptr(keyctlGetKeyringID), uintptr(id), uintptr(1))
 	if errno != 0 {
 		return nil, errno
 	}
 
 	if id >= 0 {
-		id = keyId(r1)
+		id = keyID(r1)
 	}
 	return &keyring{id: id}, nil
 }
 
-func createKeyring(parent keyId, name string) (*keyring, error) {
-	id, err := add_key("keyring", name, nil, int32(parent))
+func createKeyring(parent keyID, name string) (*keyring, error) {
+	id, err := addKeyFunc("keyring", name, nil, int32(parent))
 	if err != nil {
 		return nil, err
 	}
 
-	return &keyring{id: keyId(id)}, nil
+	return &keyring{id: keyID(id)}, nil
 }
 
-func searchKeyring(id keyId, name, keyType string) (keyId, error) {
+func searchKeyring(id keyID, name, keyType string) (keyID, error) {
 	var (
 		b1, b2 *byte
 		err    error
@@ -218,14 +218,14 @@ func searchKeyring(id keyId, name, keyType string) (keyId, error) {
 	if b2, err = syscall.BytePtrFromString(name); err != nil {
 		return 0, err
 	}
-	r1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlSearch), uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)), 0, 0)
+	r1, _, errno := syscall.Syscall6(syscallKeyctlPTR, uintptr(keyctlSearch), uintptr(id), uintptr(unsafe.Pointer(b1)), uintptr(unsafe.Pointer(b2)), 0, 0)
 	if errno != 0 {
 		err = errno
 	}
-	return keyId(r1), err
+	return keyID(r1), err
 }
 
-func describeKeyId(id keyId) ([]byte, error) {
+func describeKeyID(id keyID) ([]byte, error) {
 	var (
 		b1             []byte
 		size, sizeRead int
@@ -235,7 +235,7 @@ func describeKeyId(id keyId) ([]byte, error) {
 	size = len(b1)
 	sizeRead = size + 1
 	for sizeRead > size {
-		r1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlDescribe), uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size), 0, 0)
+		r1, _, errno := syscall.Syscall6(syscallKeyctlPTR, uintptr(keyctlDescribe), uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size), 0, 0)
 		if errno != 0 {
 			return nil, errno
 		}
@@ -251,7 +251,7 @@ func describeKeyId(id keyId) ([]byte, error) {
 	return b1[:size-1], nil
 }
 
-func listKeys(id keyId) ([]keyId, error) {
+func listKeys(id keyID) ([]keyID, error) {
 	var (
 		b1             []byte
 		size, sizeRead int
@@ -262,7 +262,7 @@ func listKeys(id keyId) ([]keyId, error) {
 	size = len(b1)
 	sizeRead = size + 1
 	for sizeRead > size {
-		r1, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlRead), uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size), 0, 0)
+		r1, _, errno := syscall.Syscall6(syscallKeyctlPTR, uintptr(keyctlRead), uintptr(id), uintptr(unsafe.Pointer(&b1[0])), uintptr(size), 0, 0)
 		if errno != 0 {
 			return nil, errno
 		}
@@ -275,20 +275,20 @@ func listKeys(id keyId) ([]keyId, error) {
 			size = sizeRead
 		}
 	}
-	keys := make([]keyId, size/bsz)
+	keys := make([]keyID, size/bsz)
 	for i := range keys {
-		keys[i] = *((*keyId)(unsafe.Pointer(&b1[i*bsz])))
+		keys[i] = *((*keyID)(unsafe.Pointer(&b1[i*bsz])))
 	}
 
 	return keys, nil
 }
 
-func updateKey(id keyId, payload []byte) error {
+func updateKey(id keyID, payload []byte) error {
 	size := len(payload)
 	if size == 0 {
 		payload = make([]byte, 1)
 	}
-	_, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlUpdate), uintptr(id), uintptr(unsafe.Pointer(&payload[0])), uintptr(size), 0, 0)
+	_, _, errno := syscall.Syscall6(syscallKeyctlPTR, uintptr(keyctlUpdate), uintptr(id), uintptr(unsafe.Pointer(&payload[0])), uintptr(size), 0, 0)
 	if errno != 0 {
 		return errno
 	}

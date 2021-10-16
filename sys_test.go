@@ -11,7 +11,7 @@ func TestListKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	keys, err := listKeys(keyId(ring.Id()))
+	keys, err := listKeys(keyID(ring.ID()))
 	if err != nil {
 		t.Fatal(err)
 	}

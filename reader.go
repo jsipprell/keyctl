@@ -29,13 +29,13 @@ func (r *reader) Read(b []byte) (int, error) {
 	return r.Buffer.Read(b)
 }
 
-// Returns an io.Reader interface object which will read the key's data from
+// NewReader returns an io.Reader interface object which will read the key's data from
 // the kernel.
 func NewReader(key *Key) io.Reader {
 	return &reader{key: key}
 }
 
-// Open an existing key on a keyring given its name
+// OpenReader opens an existing key on a keyring given its name
 func OpenReader(name string, ring Keyring) (io.Reader, error) {
 	key, err := ring.Search(name)
 	if err == nil {

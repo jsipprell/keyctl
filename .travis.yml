@@ -3,13 +3,15 @@ branches:
     - master
 language: go
 go:
-  - 1.11
+  - "1.11"
+  - "1.15"
+  - "1.16"
   - tip
 install:
-  - go get golang.org/x/crypto/openpgp
-  - go get golang.org/x/crypto/cast5
-  - go get golang.org/x/crypto/ssh/terminal
-  - go get golang.org/x/tools/cmd/cover
+  - go get -u golang.org/x/tools/cmd/cover
+  - go get -u golang.org/x/lint/golint
+  - make -v
+  - make deps
   - go build -v ./...
 script:
-  - go test -v -cover
+  - make check
