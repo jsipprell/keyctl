@@ -3,7 +3,9 @@ branches:
     - master
 language: go
 go:
-  - 1.11
+  - "1.11"
+  - "1.15"
+  - "1.16"
   - tip
 install:
   - go get golang.org/x/crypto/openpgp
