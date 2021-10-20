@@ -1,3 +1,7 @@
+// Copyright 2015 Jesse Sipprell. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package pgp
 
 import (
@@ -8,6 +12,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// PassphrasePrompt asks for password in secure way via terminal
 func PassphrasePrompt(keys []openpgp.Key, symmetric bool) ([]byte, error) {
 	if len(keys) == 0 && !symmetric {
 		return nil, io.EOF

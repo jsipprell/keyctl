@@ -1,7 +1,9 @@
 package keyctl
 
+// these constants apply only for 386 architecture
+
 const (
-	syscall_keyctl   uintptr = 288
-	syscall_add_key  uintptr = 286
-	syscall_setfsgid uintptr = 139
+	syscallKeyctlPTR   uintptr = 288
+	syscallAddKeyPTR   uintptr = 286
+	syscallSetFSGIDPTR uintptr = 139
 )

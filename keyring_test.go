@@ -14,7 +14,7 @@ func TestAdd100BytesToSessionKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("added 100 byte empty key as: %v\n", key.Id())
+	t.Logf("added 100 byte empty key as: %v\n", key.ID())
 
 	buf, err := key.Get()
 	if err != nil {
@@ -34,7 +34,7 @@ func TestAdd128BytesToSessionExpireAfter10Seconds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("added 128 byte empty key as: %v\n", key.Id())
+	t.Logf("added 128 byte empty key as: %v\n", key.ID())
 }
 
 func TestFetchKey(t *testing.T) {
@@ -99,7 +99,7 @@ func helperTestCreateKeyring(ring Keyring, name string, t *testing.T) NamedKeyri
 		t.Fatal(err)
 	}
 
-	t.Logf("created keyring %v named %q", ring.Id(), ring.(NamedKeyring).Name())
+	t.Logf("created keyring %v named %q", ring.ID(), ring.(NamedKeyring).Name())
 	return ring.(NamedKeyring)
 }
 
@@ -121,9 +121,9 @@ func TestCreateNestedKeyring(t *testing.T) {
 	}
 
 	ring = helperTestCreateKeyring(ring, "testring2", t)
-	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+	t.Logf("created nested keyring %v named %q", ring.ID(), ring.Name())
 	ring = helperTestCreateKeyring(ring, "testring3", t)
-	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+	t.Logf("created nested keyring %v named %q", ring.ID(), ring.Name())
 }
 
 func TestOpenNestedKeyring(t *testing.T) {
@@ -139,15 +139,15 @@ func TestOpenNestedKeyring(t *testing.T) {
 	}
 
 	ring = helperTestCreateKeyring(ring, "testring2", t)
-	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+	t.Logf("created nested keyring %v named %q", ring.ID(), ring.Name())
 	ring = helperTestCreateKeyring(ring, "testring3", t)
-	t.Logf("created nested keyring %v named %q", ring.Id(), ring.Name())
+	t.Logf("created nested keyring %v named %q", ring.ID(), ring.Name())
 
 	ring, err = OpenKeyring(us, "testring3")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("successfully reopened keyring %v named %q", ring.Id(), ring.Name())
+	t.Logf("successfully reopened keyring %v named %q", ring.ID(), ring.Name())
 }
 
 func TestUnlinkKeyring(t *testing.T) {
@@ -161,12 +161,12 @@ func TestUnlinkKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("created keyring %v named %q", nring.Id(), nring.Name())
+	t.Logf("created keyring %v named %q", nring.ID(), nring.Name())
 
 	err = UnlinkKeyring(nring)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("unlinked keyring %v [%s]", nring.Id(), nring.Name())
+	t.Logf("unlinked keyring %v [%s]", nring.ID(), nring.Name())
 }

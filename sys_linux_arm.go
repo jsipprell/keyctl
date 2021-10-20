@@ -1,7 +1,11 @@
 package keyctl
 
+// these constants apply only for ARM architecture
+// Code is borrowed from
+// https://github.com/nonoo/keyctl/commit/b6b7469de4a9f9515154d0799aceed891dc3104d
+
 const (
-	syscall_keyctl   uintptr = 311
-	syscall_add_key  uintptr = 309
-	syscall_setfsgid uintptr = 139
+	syscallKeyctlPTR   uintptr = 311
+	syscallAddKeyPTR   uintptr = 309
+	syscallSetFSGIDPTR uintptr = 139
 )

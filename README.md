@@ -1,7 +1,8 @@
-[![GoDoc](https://godoc.org/github.com/jsipprell/keyctl?status.svg)](https://godoc.org/github.com/jsipprell/keyctl)
-[![Build Status](https://travis-ci.org/jsipprell/keyctl.svg?branch=master)](https://travis-ci.org/jsipprell/keyctl)
-
 # keyctl
+
+[![GoDoc](https://pkg.go.dev/github.com/jsipprell/keyctl?status.svg)](https://pkg.go.dev/github.com/jsipprell/keyctl)
+[![Build Status](https://travis-ci.org/jsipprell/keyctl.svg?branch=master)](https://travis-ci.org/jsipprell/keyctl)
+[![Go Report Card](https://goreportcard.com/badge/github.com/jsipprell/keyctl)](https://goreportcard.com/report/github.com/jsipprell/keyctl)
 
 A native Go API for the security key management system (aka "keyrings") found in Linux 2.6+
 
@@ -47,24 +48,42 @@ To search for an existing key by name:
 package main
 
 import (
-  "log"
-  "github.com/jsipprell/keyctl"
+	"log"
+
+	"github.com/jsipprell/keyctl"
 )
 
 func main() {
-  keyring, err := keyctl.SessionKeyring()
-  if err != nil {
-    log.Fatal(err)
-  }
-  key, err := keyring.Search("some-data")
-  if err != nil {
-    log.Fatal(err)
-  }
- 
-  data, err := key.Get()
-  if err != nil {
-    log.Fatal(err)
-  }
-  log.Printf("secure data: %v\n", data)
+	keyring, err := keyctl.SessionKeyring()
+	if err != nil {
+		log.Fatal(err)
+	}
+	key, err := keyring.Search("some-data")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, err := key.Get()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("secure data: %v\n", data)
 }
 ```
+
+Running tests
+===================
+
+Ensure you have [GNU make](https://www.gnu.org/software/make/) installed.
+
+```shell
+
+    $ make check
+
+```
+
+
+Copyright: 2015 Jesse Sipprell. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+

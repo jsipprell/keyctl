@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func helperSetRandBlock(name string, sz int) (key Id, ring Keyring, blk []byte, err error) {
+func helperSetRandBlock(name string, sz int) (key ID, ring Keyring, blk []byte, err error) {
 	if ring, err = SessionKeyring(); err != nil {
 		return
 	}
@@ -36,7 +36,7 @@ func TestStreamReader(t *testing.T) {
 	buf := make([]byte, 128)
 	for i, err = r.Read(buf); err == nil; i, err = r.Read(buf) {
 		helperCmp(t, blk[:i], buf[:i])
-		t.Logf("compared key %v %d bytes: %v", key.Id(), i, blk[:i])
+		t.Logf("compared key %v %d bytes: %v", key.ID(), i, blk[:i])
 		blk = blk[i:]
 	}
 

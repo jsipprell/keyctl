@@ -8,37 +8,35 @@ import (
 )
 
 var (
-	// Error returned if the Get() method is called on a Reference that doesn't
+	// ErrUnsupportedKeyType error is returned if the Get() method is called on a Reference that doesn't
 	// represent a key or keychain.
 	ErrUnsupportedKeyType = errors.New("unsupported keyctl key type")
-	// Error returned if a reference is stale when Info() or Get() is called on
-	// it.
+	// ErrInvalidReference error is returned if a reference is stale when Info() or Get() is called on it.
 	ErrInvalidReference = errors.New("invalid keyctl reference")
 )
 
 // Reference is a reference to an unloaded keyctl Key or Keychain. It can be
 // dereferenced by calling the Get() method.
 type Reference struct {
-	// Id is the kernel key or keychain identifier referenced.
-	Id int32
-
+	// ID is the kernel key or keychain identifier referenced.
+	ID     int32
 	info   *Info
-	parent keyId
+	parent keyID
 }
 
-// Information about a keyctl reference as returned by ref.Info()
+// Info depicts information about a keyctl reference as returned by ref.Info()
 type Info struct {
 	Type, Name string
-	Uid, Gid   int
+	UID, Gid   int
 	Perm       KeyPerm
 
 	valid bool
 }
 
-func getInfo(id keyId) (i Info, err error) {
+func getInfo(id keyID) (i Info, err error) {
 	var desc []byte
 
-	if desc, err = describeKeyId(id); err != nil {
+	if desc, err = describeKeyID(id); err != nil {
 		i.Name = err.Error()
 		return
 	}
@@ -56,7 +54,7 @@ func getInfo(id keyId) (i Info, err error) {
 		i.Gid, _ = strconv.Atoi(string(fields[2]))
 		fallthrough
 	case 2:
-		i.Uid, _ = strconv.Atoi(string(fields[1]))
+		i.UID, _ = strconv.Atoi(string(fields[1]))
 		fallthrough
 	case 1:
 		if i.Type = string(fields[0]); i.Type == "user" {
@@ -69,23 +67,22 @@ func getInfo(id keyId) (i Info, err error) {
 	return
 }
 
-// Returns permissions in symbolic format.
+// Permissions returns permissions in symbolic format.
 func (i Info) Permissions() string {
-	if i.Uid == os.Geteuid() {
+	if i.UID == os.Geteuid() {
 		return encodePerms(uint8(i.Perm >> KeyPerm(16)))
-	} else {
-		fsgid, err := getfsgid()
-		if (err == nil && i.Gid == int(fsgid)) || i.Gid == os.Getegid() {
-			return encodePerms(uint8(i.Perm >> KeyPerm(8)))
-		}
+	}
+	fsgid, err := getfsgid()
+	if (err == nil && i.Gid == int(fsgid)) || i.Gid == os.Getegid() {
+		return encodePerms(uint8(i.Perm >> KeyPerm(8)))
 	}
 	return encodePerms(uint8(i.Perm))
 }
 
-// Return Information about a keyctl reference.
+// Info returns Information about a keyctl reference.
 func (r *Reference) Info() (i Info, err error) {
 	if r.info == nil {
-		i, err = getInfo(keyId(r.Id))
+		i, err = getInfo(keyID(r.ID))
 		r.info = &i
 		return
 	}
@@ -93,23 +90,27 @@ func (r *Reference) Info() (i Info, err error) {
 	return *r.info, err
 }
 
-// Returns true if the Info fetched by ref.Info() is valid.
+// Valid returns true if the Info fetched by ref.Info() is valid.
 func (i Info) Valid() bool {
 	return i.valid
 }
 
-// Returns true if the keyctl reference is valid. Refererences can become
+// Valid returns true if the keyctl reference is valid. References can become
 // invalid if they have expired since the reference was created.
 func (r *Reference) Valid() bool {
 	if r.info == nil {
-		r.Info()
+		i, err := r.Info()
+		if err != nil {
+			return false
+		}
+		return i.valid
 	}
 	return r.info.valid
 }
 
-// Loads the referenced keyctl object, which must either be a key or a
+// Get loads the referenced keyctl object, which must either be a key or a
 // keyring otherwise ErrUnsupportedKeyType will be returned.
-func (r *Reference) Get() (Id, error) {
+func (r *Reference) Get() (ID, error) {
 	if r.info == nil {
 		_, err := r.Info()
 		if err != nil {
@@ -123,10 +124,10 @@ func (r *Reference) Get() (Id, error) {
 
 	switch r.info.Type {
 	case "key", "big_key":
-		return &Key{Name: r.info.Name, id: keyId(r.Id), ring: r.parent}, nil
+		return &Key{Name: r.info.Name, id: keyID(r.ID), ring: r.parent}, nil
 	case "keyring":
-		ring := &keyring{id: keyId(r.Id)}
-		if r.Id > 0 && r.info.Name != "" {
+		ring := &keyring{id: keyID(r.ID)}
+		if r.ID > 0 && r.info.Name != "" {
 			return &namedKeyring{
 				keyring: ring,
 				parent:  r.parent,
@@ -139,12 +140,12 @@ func (r *Reference) Get() (Id, error) {
 	}
 }
 
-// List the contents of a keyring. Each contained object is represented by a
-// Reference struct. Addl information is available by calling ref.Info(), and
+// ListKeyring shows the contents of a keyring. Each contained object is represented by a
+// Reference struct. Address information is available by calling ref.Info(), and
 // contained objects which are keys or subordinate keyrings can be fetched by
 // calling ref.Get()
 func ListKeyring(kr Keyring) ([]Reference, error) {
-	id := keyId(kr.Id())
+	id := keyID(kr.ID())
 	keys, err := listKeys(id)
 	if err != nil {
 		return nil, err
@@ -153,7 +154,7 @@ func ListKeyring(kr Keyring) ([]Reference, error) {
 	refs := make([]Reference, len(keys))
 
 	for i, k := range keys {
-		refs[i].Id, refs[i].parent = int32(k), id
+		refs[i].ID, refs[i].parent = int32(k), id
 	}
 
 	return refs, nil
