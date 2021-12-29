@@ -112,6 +112,18 @@ func TestCreateKeyring(t *testing.T) {
 	}
 }
 
+func TestAttachPersistentKeyring(t *testing.T) {
+	kr, err := SessionKeyring()
+	if err != nil {
+		t.Fatalf("unexpected test failure: could not create session keyring: %v", err)
+	}
+	pkr, err := kr.AttachPersistent()
+	if err != nil {
+		t.Fatalf("unexpected test failure: could not attach persistent keyring: %v", err)
+	}
+	t.Logf("found persistent keyring %d", pkr.Id())
+}
+
 func TestCreateNestedKeyring(t *testing.T) {
 	ring := helperTestCreateKeyring(nil, "", t)
 

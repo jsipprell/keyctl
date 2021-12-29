@@ -37,6 +37,12 @@ const (
 	keyctlSetReqKeyKeyring
 	keyctlSetTimeout
 	keyctlAssumeAuthority
+	keyctlGetSecurity
+	keyctlSessionToParent
+	keyctlReject
+	keyctlInstantiateIOV
+	keyctlInvalidate
+	keyctlGetPersistent
 )
 
 var debugSyscalls bool
@@ -81,6 +87,8 @@ func (cmd keyctlCommand) String() string {
 		return "keyctlSetTimeout"
 	case keyctlAssumeAuthority:
 		return "keyctlAssumeAuthority"
+	case keyctlGetPersistent:
+		return "keyctlGetPersistent"
 	}
 	panic("bad arg")
 }
@@ -293,4 +301,13 @@ func updateKey(id keyId, payload []byte) error {
 		return errno
 	}
 	return nil
+}
+
+func attachPersistent(id keyId) (*keyring, error) {
+	uid := int32(-1)
+	r1, _, errno := syscall.Syscall(syscall_keyctl, uintptr(keyctlGetPersistent), uintptr(uid), uintptr(id))
+	if errno != 0 {
+		return nil, errno
+	}
+	return &keyring{id: keyId(r1)}, nil
 }
