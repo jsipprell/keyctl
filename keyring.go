@@ -96,6 +96,11 @@ func UserSessionKeyring() (Keyring, error) {
 	return newKeyring(keySpecUserSessionKeyring)
 }
 
+// UserKeyring returns users keyring
+func UserKeyring() (Keyring, error) {
+	return newKeyring(keySpecUserKeyring)
+}
+
 // GroupKeyring return the current group keyring.
 func GroupKeyring() (Keyring, error) {
 	return newKeyring(keySpecGroupKeyring)
