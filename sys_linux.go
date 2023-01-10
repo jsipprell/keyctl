@@ -20,6 +20,10 @@ const (
 )
 
 const (
+	keyctlMoveExcl uint = 1
+)
+
+const (
 	keyctlGetKeyringId keyctlCommand = iota
 	keyctlJoinSessionKeyring
 	keyctlUpdate
@@ -37,6 +41,22 @@ const (
 	keyctlSetReqKeyKeyring
 	keyctlSetTimeout
 	keyctlAssumeAuthority
+	keyctlGetSecurity
+	keyctlSessionToParent
+	keyctlReject
+	keyctlInstantiateIov
+	keyctlInvalidate
+	keyctlGetPersistent
+	keyctlDhCompute
+	keyctlPkeyQuery
+	keyctlPkeyEncrypt
+	keyctlPkeyDecrypt
+	keyctlPkeySign
+	keyctlPkeyVerify
+	keyctlRestrictKeyring
+	keyctlMove
+	keyctlCapabilities
+	keyctlWatchKey
 )
 
 var debugSyscalls bool
@@ -81,6 +101,38 @@ func (cmd keyctlCommand) String() string {
 		return "keyctlSetTimeout"
 	case keyctlAssumeAuthority:
 		return "keyctlAssumeAuthority"
+	case keyctlGetSecurity:
+		return "keyctlGetSecurity"
+	case keyctlSessionToParent:
+		return "keyctlSessionToParent"
+	case keyctlReject:
+		return "keyctlReject"
+	case keyctlInstantiateIov:
+		return "keyctlInstantiateIov"
+	case keyctlInvalidate:
+		return "keyctlInvalidate"
+	case keyctlGetPersistent:
+		return "keyctlGetPersistent"
+	case keyctlDhCompute:
+		return "keyctlDhCompute"
+	case keyctlPkeyQuery:
+		return "keyctlPkeyQuery"
+	case keyctlPkeyEncrypt:
+		return "keyctlPkeyEncrypt"
+	case keyctlPkeyDecrypt:
+		return "keyctlPkeyDecrypt"
+	case keyctlPkeySign:
+		return "keyctlPkeySign"
+	case keyctlPkeyVerify:
+		return "keyctlPkeyVerify"
+	case keyctlRestrictKeyring:
+		return "keyctlRestrictKeyring"
+	case keyctlMove:
+		return "keyctlMove"
+	case keyctlCapabilities:
+		return "keyctlCapabilities"
+	case keyctlWatchKey:
+		return "keyctlWatchKey"
 	}
 	panic("bad arg")
 }
@@ -289,6 +341,14 @@ func updateKey(id keyId, payload []byte) error {
 		payload = make([]byte, 1)
 	}
 	_, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlUpdate), uintptr(id), uintptr(unsafe.Pointer(&payload[0])), uintptr(size), 0, 0)
+	if errno != 0 {
+		return errno
+	}
+	return nil
+}
+
+func keyctl_Move(id, from_ring keyId, to_ring keyId, flags uint) error {
+	_, _, errno := syscall.Syscall6(syscall_keyctl, uintptr(keyctlMove), uintptr(id), uintptr(from_ring), uintptr(to_ring), uintptr(flags), 0)
 	if errno != 0 {
 		return errno
 	}
